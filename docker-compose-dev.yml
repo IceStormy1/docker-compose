@@ -1,0 +1,87 @@
+version: '3.4'
+
+networks:
+  services_dev:
+    name: services_dev
+
+services:
+  # nginx:
+  #   image: nginx:latest
+  #   container_name: 'nginx'
+  #   volumes:
+  #     - ./nginx.conf:/etc/nginx/nginx.conf
+  #     - ./domain.crt:/etc/nginx/cert.crt
+  #     - ./domain.rsa:/etc/nginx/cert.rsa
+  #   ports:
+  #     - "5001:8083"
+  #   depends_on:
+  #     - authorization-api
+      
+  postgres:
+    image: postgres:latest
+    container_name: 'postgres'
+    env_file:
+      - .env-dev
+    command: -p 5434
+    restart: always
+    expose:
+      - "5434"
+    ports:
+      - '5434:5434'
+    networks:
+      services_dev:
+    volumes: 
+      - ~/.docker-conf/postgres:/var/lib/postgresql/data
+
+  rabbitmq:
+    image: rabbitmq:3.9.7-management
+    container_name: 'rabbitmq'
+    env_file:
+      - .env-dev
+    hostname: myrabbitmq
+    restart: unless-stopped
+    ports:
+      - 5672:5672 # AMQP protocol port
+      - 15672:15672 # UI for images ...:3-management
+    healthcheck:
+      test: rabbitmq-diagnostics -q ping
+      interval: 10s
+      timeout: 5s
+      retries: 3
+      start_period: 0s
+    networks:
+      services_dev:
+    volumes:
+        - ~/.docker-conf/rabbitmq/data/:/var/lib/rabbitmq/
+        - ~/.docker-conf/rabbitmq/log/:/var/log/rabbitmq
+
+  minio:
+    image: minio/minio:latest
+    container_name: 'minio'
+    env_file:
+      - .env-dev
+    command: server --console-address ":9001" /data
+    volumes:
+      - ~/.docker-conf/minio:/data
+    ports:
+      - "9000:9000"
+      - "9001:9001"
+    networks:
+      services_dev:
+
+  redis:
+    image: redis
+    container_name: redis
+    command: ["redis-server", "--appendonly", "yes"]
+    volumes:
+      - ~/.docker-conf/redisdata:/data
+    ports:
+      - "6379:6379"
+    networks:
+      services_dev:
+
+volumes:
+  redisdata:
+  minio:
+  postgres:
+    driver: local
