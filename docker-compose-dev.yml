@@ -3,19 +3,25 @@ version: '3.4'
 networks:
   services_dev:
     name: services_dev
+  theater_dev:
+    external: true
+    name: theater_dev
+  authorization-dev:
+    external: true
+    name: authorization-dev
 
 services:
-  # nginx:
-  #   image: nginx:latest
-  #   container_name: 'nginx'
-  #   volumes:
-  #     - ./nginx.conf:/etc/nginx/nginx.conf
-  #     - ./domain.crt:/etc/nginx/cert.crt
-  #     - ./domain.rsa:/etc/nginx/cert.rsa
-  #   ports:
-  #     - "5001:8083"
-  #   depends_on:
-  #     - authorization-api
+  nginx:
+    image: nginx:latest
+    container_name: 'nginx'
+    networks:
+      theater_dev:
+    volumes:
+      - ./nginx.conf:/etc/nginx/nginx.conf:ro
+      #- ./domain.crt:/etc/nginx/cert.crt
+      #- ./domain.rsa:/etc/nginx/cert.rsa
+    ports:
+      - "80:80"
       
   postgres:
     image: postgres:latest
